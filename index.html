@@ -3,52 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>捕魚歌 - 前奏延遲同步版</title>
+    <title>捕魚歌 - 自動翻頁律動版</title>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .control-panel { background: #333; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; width: 100%; max-width: 800px; }
-        audio { margin: 15px 0; width: 100%; max-width: 400px; }
-        .lyrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 800px; }
-        .beat-box { background: #2d3436; padding: 15px 5px; text-align: center; border-radius: 8px; transition: all 0.1s ease; display: flex; flex-direction: column; align-items: center; opacity: 0.5; }
-        .beat-box.highlight { background: #f1c40f; color: black; transform: scale(1.08); box-shadow: 0 0 20px #f1c40f; opacity: 1; }
-        .action { display: block; font-size: 2.2rem; font-weight: bold; color: #ff7675; line-height: 1.2; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; overflow-x: hidden; }
+        .control-panel { background: #333; padding: 15px; border-radius: 15px; margin-bottom: 15px; text-align: center; width: 95%; max-width: 800px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        audio { margin: 10px 0; width: 100%; }
+        
+        /* 分頁按鈕樣式 */
+        .page-indicator { margin: 10px 0; display: flex; gap: 10px; justify-content: center; }
+        .page-btn { background: #555; border: none; color: white; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
+        .page-btn.active { background: #3498db; font-weight: bold; }
+
+        .lyrics-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 12px; 
+            width: 95%; 
+            max-width: 800px; 
+        }
+        
+        /* 隱藏非當前頁面 */
+        .page-content { display: none; }
+        .page-content.active { display: grid; }
+
+        .beat-box { background: #2d3436; padding: 25px 5px; text-align: center; border-radius: 12px; transition: all 0.1s ease; display: flex; flex-direction: column; align-items: center; opacity: 0.4; min-height: 120px; justify-content: center; }
+        .beat-box.highlight { background: #f1c40f; color: black; transform: scale(1.05); box-shadow: 0 0 25px #f1c40f; opacity: 1; border: 3px solid #fff; }
+        
+        .action { display: block; font-size: 2.8rem; font-weight: bold; color: #ff7675; line-height: 1.1; }
         .beat-box.highlight .action { color: #d63031; }
-        .lyrics { display: block; font-size: 1.6rem; margin-top: 5px; }
-        #status { font-weight: bold; height: 24px; }
+        .lyrics { display: block; font-size: 2rem; margin-top: 10px; font-weight: bold; }
+        
+        .config-row { display: flex; justify-content: center; gap: 15px; font-size: 0.85rem; margin-top: 10px; color: #ccc; }
+        input { background: #444; color: white; border: 1px solid #666; width: 45px; text-align: center; border-radius: 4px; }
+        #status { font-weight: bold; margin-top: 10px; font-size: 1.2rem; height: 30px; }
     </style>
 </head>
 <body>
 
-    <h1>🚢 捕魚歌：音樂同步 (含前奏延遲)</h1>
-
     <div class="control-panel">
         <audio id="bgMusic" controls>
-            <source src="https://github.com/goodskyfly-cell/fishsong/blob/main/fishing_song.mp3" type="audio/mpeg">
+            <source src="https://raw.githubusercontent.com/goodskyfly-cell/fishsong/main/fishing_song.mp3" type="audio/mpeg">
         </audio>
 
-        <div id="status" style="margin-top: 10px; color: #f1c40f;">等待播放...</div>
+        <div id="status" style="color: #f1c40f;">點擊播放開始 (第 7 秒進入)</div>
         
-        <div style="margin-top: 15px; display: flex; justify-content: center; gap: 20px; font-size: 0.9rem;">
-            <div>基準 BPM: <input type="number" id="bpmInput" value="120" style="width: 50px;"></div>
-            <div>前奏延遲 (秒): <input type="number" id="delayInput" value="7" step="0.1" style="width: 50px;"></div>
+        <div class="page-indicator">
+            <button class="page-btn active" id="btnPage1" onclick="showPage(1)">第一頁</button>
+            <button class="page-btn" id="btnPage2" onclick="showPage(2)">第二頁</button>
+        </div>
+
+        <div class="config-row">
+            <div>BPM: <input type="number" id="bpmInput" value="120"></div>
+            <div>延遲(秒): <input type="number" id="delayInput" value="7" step="0.1"></div>
         </div>
     </div>
 
-    <div class="lyrics-grid" id="grid"></div>
+    <div id="page1" class="page-content active lyrics-grid"></div>
+    <div id="page2" class="page-content lyrics-grid"></div>
 
     <script>
         const songData = [
+            // 第一頁數據
             { a: "拍", l: "白" }, { a: "拍", l: "浪" }, { a: "打打", l: "滔" }, { a: "打", l: "滔" },
             { a: "拍", l: "我" }, { a: "拿", l: "不" }, { a: "放", l: "怕" }, { a: "～", l: "，" },
             { a: "拍", l: "掌" }, { a: "拿", l: "穩" }, { a: "碰", l: "舵" }, { a: "敲", l: "兒" },
             { a: "換", l: "往" }, { a: "手", l: "前" }, { a: "放", l: "划" }, { a: "～", l: "，" },
+            // 第二頁數據
             { a: "拍", l: "撒" }, { a: "拍", l: "網" }, { a: "打打", l: "下" }, { a: "打", l: "水" },
             { a: "拍", l: "到" }, { a: "拿", l: "魚" }, { a: "放", l: "家" }, { a: "～", l: "，" },
             { a: "拍", l: "捕" }, { a: "拿", l: "條" }, { a: "碰", l: "大" }, { a: "敲", l: "魚" },
             { a: "換", l: "笑" }, { a: "手", l: "哈" }, { a: "放", l: "哈" }, { a: "～", l: "。" }
         ];
 
-        const grid = document.getElementById('grid');
         const audio = document.getElementById('bgMusic');
         const bpmInput = document.getElementById('bpmInput');
         const delayInput = document.getElementById('delayInput');
@@ -58,33 +84,48 @@
         let delayTimer = null;
         let currentIndex = 0;
 
-        songData.forEach(item => {
+        // 初始化分頁內容
+        const p1 = document.getElementById('page1');
+        const p2 = document.getElementById('page2');
+
+        songData.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'beat-box';
+            div.id = 'box-' + index;
             div.innerHTML = `<span class="action">${item.a}</span><span class="lyrics">${item.l}</span>`;
-            grid.appendChild(div);
+            if (index < 16) p1.appendChild(div);
+            else p2.appendChild(div);
         });
 
-        const boxes = document.querySelectorAll('.beat-box');
+        function showPage(num) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('page' + num).classList.add('active');
+            document.getElementById('btnPage' + num).classList.add('active');
+        }
 
         function playNext() {
-            boxes.forEach(b => b.classList.remove('highlight'));
-            if (currentIndex < boxes.length) {
-                boxes[currentIndex].classList.add('highlight');
+            document.querySelectorAll('.beat-box').forEach(b => b.classList.remove('highlight'));
+            
+            if (currentIndex < songData.length) {
+                // 自動翻頁邏輯：當進行到第 17 格時自動切換到第二頁
+                if (currentIndex === 16) showPage(2);
+                if (currentIndex === 0) showPage(1);
+
+                document.getElementById('box-' + currentIndex).classList.add('highlight');
                 currentIndex++;
             } else {
-                // 若音樂還在跑且已唱完歌詞，可在此設定停止或循環
-                clearInterval(timer);
+                clearAllTimers();
                 statusText.innerText = "演唱結束";
             }
         }
 
         audio.onplay = function() {
             clearAllTimers();
+            showPage(1); // 開始時回到第一頁
             const delayTime = parseFloat(delayInput.value) * 1000;
-            statusText.innerText = "前奏中，準備開始...";
+            statusText.innerText = "前奏倒數中...";
             
-            // 設定延遲啟動
             delayTimer = setTimeout(() => {
                 statusText.innerText = "GO! 🎵";
                 const interval = 60000 / parseInt(bpmInput.value);
@@ -94,23 +135,12 @@
             }, delayTime);
         };
 
-        audio.onpause = function() {
-            clearAllTimers();
-            statusText.innerText = "暫停播放";
-        };
-
-        audio.onseeked = function() {
-            // 如果使用者手動拉進度條，停止動畫避免亂拍
-            clearAllTimers();
-            boxes.forEach(b => b.classList.remove('highlight'));
-            statusText.innerText = "請重新播放以同步";
-        };
+        audio.onpause = function() { clearAllTimers(); statusText.innerText = "已暫停"; };
 
         function clearAllTimers() {
             if(timer) clearInterval(timer);
             if(delayTimer) clearTimeout(delayTimer);
-            timer = null;
-            delayTimer = null;
+            timer = null; delayTimer = null;
         }
     </script>
 </body>
