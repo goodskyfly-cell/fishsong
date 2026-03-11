@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>捕魚歌 - 音樂同步律動器</title>
+    <style>
+        /* 保持之前的樣式 */
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .control-panel { background: #333; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; width: 100%; max-width: 800px; }
+        
+        /* 音樂播放器樣式 */
+        audio { margin: 15px 0; width: 100%; max-width: 400px; }
+
+        .lyrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 800px; }
+        .beat-box { background: #2d3436; padding: 15px 5px; text-align: center; border-radius: 8px; transition: all 0.1s ease; display: flex; flex-direction: column; align-items: center; }
+        .beat-box.highlight { background: #f1c40f; color: black; transform: scale(1.08); box-shadow: 0 0 20px #f1c40f; }
+        .action { display: block; font-size: 2.2rem; font-weight: bold; color: #ff7675; }
+        .beat-box.highlight .action { color: #d63031; }
+        .lyrics { display: block; font-size: 1.6rem; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>🚢 捕魚歌：音樂同步模式</h1>
+
+    <div class="control-panel">
+        <audio id="bgMusic" controls>
+            <source src="fishing_song.mp3" type="audio/mpeg">
+            您的瀏覽器不支援音檔播放。
+        </audio>
+
+        <div id="status" style="margin-top: 10px; color: #f1c40f;">請點擊播放器「▶」開始同步</div>
+        
+        <div style="margin-top: 10px; font-size: 0.9rem; color: #aaa;">
+            提示：若音樂與動作沒對準，可調整下方 BPM
+        </div>
+        
+        <div class="speed-selector" style="margin-top:10px;">
+            基準速度調整 (BPM)：
+            <input type="number" id="bpmInput" value="120" style="width: 50px; padding: 5px;">
+        </div>
+    </div>
+
+    <div class="lyrics-grid" id="grid"></div>
+
+    <script>
+        const songData = [
+            { a: "拍", l: "白" }, { a: "拍", l: "浪" }, { a: "打打", l: "滔" }, { a: "打", l: "滔" },
+            { a: "拍", l: "我" }, { a: "拿", l: "不" }, { a: "放", l: "怕" }, { a: "～", l: "，" },
+            { a: "拍", l: "掌" }, { a: "拿", l: "穩" }, { a: "碰", l: "舵" }, { a: "敲", l: "兒" },
+            { a: "換", l: "往" }, { a: "手", l: "前" }, { a: "放", l: "划" }, { a: "～", l: "，" },
+            { a: "拍", l: "撒" }, { a: "拍", l: "網" }, { a: "打打", l: "下" }, { a: "打", l: "水" },
+            { a: "拍", l: "到" }, { a: "拿", l: "魚" }, { a: "放", l: "家" }, { a: "～", l: "，" },
+            { a: "拍", l: "捕" }, { a: "拿", l: "條" }, { a: "碰", l: "大" }, { a: "敲", l: "魚" },
+            { a: "換", l: "笑" }, { a: "手", l: "哈" }, { a: "放", l: "哈" }, { a: "～", l: "。" }
+        ];
+
+        const grid = document.getElementById('grid');
+        const audio = document.getElementById('bgMusic');
+        const bpmInput = document.getElementById('bpmInput');
+        
+        let timer = null;
+        let currentIndex = 0;
+
+        // 初始化格子
+        songData.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'beat-box';
+            div.innerHTML = `<span class="action">${item.a}</span><span class="lyrics">${item.l}</span>`;
+            grid.appendChild(div);
+        });
+
+        const boxes = document.querySelectorAll('.beat-box');
+
+        function playNext() {
+            boxes.forEach(b => b.classList.remove('highlight'));
+            if (currentIndex < boxes.length) {
+                boxes[currentIndex].classList.add('highlight');
+                currentIndex++;
+            } else {
+                // 音樂循環或停止
+                currentIndex = 0; 
+            }
+        }
+
+        // 監聽：當音樂開始播放時啟動動畫
+        audio.onplay = function() {
+            const interval = 60000 / parseInt(bpmInput.value);
+            currentIndex = 0;
+            if(timer) clearInterval(timer);
+            playNext(); 
+            timer = setInterval(playNext, interval);
+        };
+
+        // 監聽：當音樂暫停時停止動畫
+        audio.onpause = function() {
+            clearInterval(timer);
+            timer = null;
+        };
+
+        // 監聽：當音樂停止(放完)時重設
+        audio.onended = function() {
+            clearInterval(timer);
+            currentIndex = 0;
+            boxes.forEach(b => b.classList.remove('highlight'));
+        };
+    </script>
+</body>
+</html>
