@@ -3,37 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>捕魚歌 - 全曲完整循環版</title>
+    <title>捕魚歌 - 單一視窗全滿版</title>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
-        .control-panel { background: #333; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; width: 95%; max-width: 900px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        audio { margin: 10px 0; width: 100%; height: 45px; }
+        /* 1. 鎖定全視窗排版 */
+        * { box-sizing: border-box; }
+        body { 
+            font-family: "Microsoft JhengHei", sans-serif; 
+            background-color: #1a1a1a; color: white; 
+            display: flex; flex-direction: column; align-items: center; 
+            height: 100vh; /* 強制高度為 100% 視窗高度 */
+            margin: 0; padding: 10px; overflow: hidden; /* 禁止捲軸 */
+        }
+
+        /* 2. 壓縮控制面板 */
+        .control-panel { 
+            background: #333; padding: 10px 15px; border-radius: 12px; 
+            width: 98%; max-width: 950px; text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); margin-bottom: 8px;
+            z-index: 10;
+        }
+        audio { width: 100%; height: 32px; margin: 5px 0; }
         
-        #countdown { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12rem; font-weight: 900; z-index: 100; display: none; pointer-events: none; text-shadow: 0 0 30px rgba(0,0,0,0.8); }
+        #countdown { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            font-size: 15rem; font-weight: 900; z-index: 100; display: none; 
+            pointer-events: none; text-shadow: 0 0 40px rgba(0,0,0,0.9); 
+        }
 
-        .page-indicator { margin: 10px 0; display: flex; gap: 10px; justify-content: center; }
-        .page-btn { background: #444; border: 1px solid #666; color: #aaa; padding: 8px 25px; border-radius: 5px; cursor: pointer; font-size: 1.1rem; }
-        .page-btn.active { background: #e67e22; color: white; font-weight: bold; border-color: #ff9f43; }
+        .page-indicator { margin-bottom: 8px; display: flex; gap: 10px; justify-content: center; }
+        .page-btn { 
+            background: #444; border: 1px solid #666; color: #aaa; 
+            padding: 5px 20px; border-radius: 5px; cursor: pointer; font-size: 1rem; 
+        }
+        .page-btn.active { background: #e67e22; color: white; font-weight: bold; }
 
-        .page-content { display: none; width: 95%; max-width: 1100px; }
-        .page-content.active { display: block; }
-        .lyrics-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; margin-bottom: 20px; }
+        /* 3. 歌詞區域填滿剩餘高度 */
+        .page-content { 
+            display: none; width: 98%; max-width: 1100px; 
+            flex: 1; /* 自動填滿剩餘空間 */
+            flex-direction: column; justify-content: center;
+        }
+        .page-content.active { display: flex; }
 
-        .beat-box { background: #2d3436; padding: 25px 2px; text-align: center; border-radius: 12px; transition: all 0.1s ease; display: flex; flex-direction: column; align-items: center; opacity: 0.2; border: 2px solid #3d4446; }
-        .beat-box.highlight { background: #f1c40f; color: black !important; transform: scale(1.12); box-shadow: 0 0 25px #f1c40f; opacity: 1; border: 3px solid #fff; z-index: 10; }
+        .lyrics-row { 
+            display: grid; grid-template-columns: repeat(8, 1fr); 
+            gap: 8px; margin-bottom: 8px; height: 22vh; /* 固定每一排高度，避免超出螢幕 */
+        }
+
+        .beat-box { 
+            background: #2d3436; border-radius: 10px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0.15; border: 2px solid #3d4446; transition: all 0.1s ease;
+        }
         
-        .action { display: block; font-size: 2.6rem; font-weight: bold; color: #ff7675; line-height: 1.1; }
+        .beat-box.highlight { 
+            background: #f1c40f; color: black !important; transform: scale(1.05); 
+            box-shadow: 0 0 20px #f1c40f; opacity: 1; border: 3px solid #fff; z-index: 10;
+        }
+        
+        /* 4. 字體大於歌詞 */
+        .action { display: block; font-size: 2.2rem; font-weight: bold; color: #ff7675; line-height: 1; }
         .beat-box.highlight .action { color: #d63031; }
-        .lyrics { display: block; font-size: 2rem; margin-top: 10px; font-weight: bold; }
+        .lyrics { display: block; font-size: 1.6rem; margin-top: 5px; font-weight: bold; }
         
-        .config-row { display: flex; justify-content: center; gap: 15px; font-size: 0.95rem; margin-top: 10px; color: #fbc531; flex-wrap: wrap; }
-        input { background: #222; color: #fff; border: 1px solid #fbc531; width: 60px; text-align: center; border-radius: 4px; font-size: 1.1rem; padding: 3px; }
-        #status { font-weight: bold; margin-top: 5px; font-size: 1.3rem; height: 35px; color: #f1c40f; }
+        .config-row { display: flex; justify-content: center; gap: 15px; font-size: 0.85rem; color: #fbc531; }
+        input { background: #222; color: #fff; border: 1px solid #fbc531; width: 55px; text-align: center; border-radius: 4px; }
+        #status { font-weight: bold; font-size: 1.1rem; color: #f1c40f; height: 25px; }
 
-        @media (max-width: 900px) {
-            .lyrics-row { grid-template-columns: repeat(4, 1fr); }
+        /* 針對窄螢幕(手機直放)的自動調整 */
+        @media (max-width: 800px) {
+            .lyrics-row { grid-template-columns: repeat(4, 1fr); gap: 5px; height: 18vh; }
+            .action { font-size: 1.6rem; }
+            .lyrics { font-size: 1.2rem; }
+        }
+
+        /* 針對較小螢幕(如舊款 iPad)微調高度 */
+        @media (max-height: 700px) {
             .action { font-size: 1.8rem; }
-            .lyrics { font-size: 1.4rem; }
+            .lyrics { font-size: 1.3rem; }
+            .lyrics-row { height: 18vh; }
         }
     </style>
 </head>
@@ -45,17 +93,18 @@
         <audio id="bgMusic" controls>
             <source src="https://raw.githubusercontent.com/goodskyfly-cell/fishsong/main/fishing_song.mp3" type="audio/mpeg">
         </audio>
-        <div id="status">準備就緒</div>
+        
+        <div id="status">準備就緒，點擊播放 (6.8s/43.7s)</div>
         
         <div class="page-indicator">
-            <button class="page-btn active" id="btn1">第一遍唱完</button>
-            <button class="page-btn" id="btn2">第二遍唱完</button>
+            <button class="page-btn active" id="btn1" onclick="showPage(1)">第一遍</button>
+            <button class="page-btn" id="btn2" onclick="showPage(2)">第二遍</button>
         </div>
 
         <div class="config-row">
-            <div>BPM: <input type="number" id="bpmInput" value="130"></div>
-            <div>第一遍開始(秒): <input type="number" id="delay1Input" value="7.5" step="0.1"></div>
-            <div>第二遍開始(秒): <input type="number" id="delay2Input" value="44.0" step="0.1"></div>
+            <div>節奏 BPM: <input type="number" id="bpmInput" value="130"></div>
+            <div>Part 1 (秒): <input type="number" id="delay1Input" value="6.8" step="0.1"></div>
+            <div>Part 2 (秒): <input type="number" id="delay2Input" value="43.7" step="0.1"></div>
         </div>
     </div>
 
@@ -74,7 +123,7 @@
     </div>
 
     <script>
-        // 定義一次完整演唱的歌詞 (32格)
+        // 定義完整演唱的歌詞資料 (32格)
         const fullLyrics = [
             { a: "拍", l: "白" }, { a: "拍", l: "浪" }, { a: "打打", l: "滔" }, { a: "打", l: "滔" },
             { a: "拍", l: "我" }, { a: "拿", l: "不" }, { a: "放", l: "怕" }, { a: "～", l: "，" },
@@ -91,23 +140,23 @@
 
         const audio = document.getElementById('bgMusic');
         const bpmInput = document.getElementById('bpmInput');
-        const delay1Input = document.getElementById('delay1Input');
-        const delay2Input = document.getElementById('delay2Input');
+        const d1In = document.getElementById('delay1Input');
+        const d2In = document.getElementById('delay2Input');
         const statusText = document.getElementById('status');
         const countdownEl = document.getElementById('countdown');
-        const allRows = [
+        const rows = [
             document.getElementById('row1-1'), document.getElementById('row1-2'), document.getElementById('row1-3'), document.getElementById('row1-4'),
             document.getElementById('row2-1'), document.getElementById('row2-2'), document.getElementById('row2-3'), document.getElementById('row2-4')
         ];
         
         let timer = null, currentIndex = 0;
 
+        // 初始化所有方塊
         songData.forEach((item, index) => {
             const div = document.createElement('div');
-            div.className = 'beat-box';
-            div.id = 'box-' + index;
+            div.className = 'beat-box'; div.id = 'box-' + index;
             div.innerHTML = `<span class="action">${item.a}</span><span class="lyrics">${item.l}</span>`;
-            allRows[Math.floor(index / 8)].appendChild(div);
+            rows[Math.floor(index / 8)].appendChild(div);
         });
 
         function showPage(num) {
@@ -117,49 +166,55 @@
             document.getElementById('btn' + num).classList.add('active');
         }
 
-        function handleCountdown(currentTime, targetTime) {
-            const timeLeft = targetTime - currentTime;
-            if (timeLeft <= 3 && timeLeft > 0) {
-                countdownEl.style.display = 'block';
-                const count = Math.ceil(timeLeft);
-                countdownEl.innerText = count;
-                countdownEl.style.color = count === 3 ? "#3498db" : (count === 2 ? "#f39c12" : "#e74c3c");
-            } else { countdownEl.style.display = 'none'; }
-        }
-
         function playStep() {
             document.querySelectorAll('.beat-box').forEach(b => b.classList.remove('highlight'));
             if (currentIndex < songData.length) {
-                document.getElementById('box-' + currentIndex).classList.add('highlight');
+                const target = document.getElementById('box-' + currentIndex);
+                if (target) target.classList.add('highlight');
                 currentIndex++;
-                // 唱完第一遍 (32格) 停止，等待間奏
+                // 唱完第一遍 (32格) 停止計時器，等待間奏
                 if (currentIndex === 32) { stopBeatTimer(); statusText.innerText = "第一遍唱完，間奏中..."; }
-            } else {
-                stopBeatTimer(); statusText.innerText = "全部演唱完成！";
-            }
+            } else { stopBeatTimer(); statusText.innerText = "完成！"; }
         }
 
         function stopBeatTimer() { clearInterval(timer); timer = null; }
 
         audio.ontimeupdate = function() {
-            const currentTime = audio.currentTime;
-            const d1 = parseFloat(delay1Input.value), d2 = parseFloat(delay2Input.value);
-            const interval = 60000 / parseInt(bpmInput.value);
+            const time = audio.currentTime;
+            const d1 = parseFloat(d1In.value), d2 = parseFloat(d2In.value);
+            
+            // 倒數邏輯
+            const target = (currentIndex < 32) ? d1 : d2;
+            const timeLeft = target - time;
+            if (timeLeft <= 3 && timeLeft > 0 && (currentIndex === 0 || currentIndex === 32)) {
+                countdownEl.style.display = 'block';
+                const count = Math.ceil(timeLeft);
+                countdownEl.innerText = count;
+                countdownEl.style.color = count === 3 ? "#3498db" : (count === 2 ? "#f39c12" : "#e74c3c");
+            } else { countdownEl.style.display = 'none'; }
 
-            if (currentIndex === 0) handleCountdown(currentTime, d1);
-            if (currentTime >= d1 && currentTime < d1 + 0.3 && currentIndex === 0 && !timer) {
-                showPage(1); timer = setInterval(playStep, interval); statusText.innerText = "第一遍：開始！";
+            // 啟動邏輯 (已設定為6.8秒與43.7秒)
+            if (time >= d1 && time < d1 + 0.3 && currentIndex === 0 && !timer) {
+                showPage(1); timer = setInterval(playStep, 60000 / parseInt(bpmInput.value)); statusText.innerText = "第一遍：開始！";
             }
-
-            if (currentIndex === 32) handleCountdown(currentTime, d2);
-            if (currentTime >= d2 && currentTime < d2 + 0.3 && currentIndex === 32 && !timer) {
-                showPage(2); timer = setInterval(playStep, interval); statusText.innerText = "第二遍：開始！";
+            if (time >= d2 && time < d2 + 0.3 && currentIndex === 32 && !timer) {
+                showPage(2); timer = setInterval(playStep, 60000 / parseInt(bpmInput.value)); statusText.innerText = "第二遍：開始！";
             }
         };
 
+        // 按下播放、停止或使用者拖動時間時的重置邏輯
         audio.onplay = () => { if (audio.currentTime < 1) { currentIndex = 0; showPage(1); } };
         audio.onpause = stopBeatTimer;
-        audio.onseeked = () => { location.reload(); }; 
+        // 如果使用者手動拉進度條，重整狀態
+        audio.onseeked = () => {
+            stopBeatTimer();
+            const time = audio.currentTime;
+            const d2 = parseFloat(d2In.value);
+            // 根據時間重設 index
+            if (time < d2) { currentIndex = 0; showPage(1); statusText.innerText = "已重設為第一段"; } 
+            else { currentIndex = 32; showPage(2); statusText.innerText = "已重設為第二段"; }
+            document.querySelectorAll('.beat-box').forEach(b => b.classList.remove('highlight'));
+        };
     </script>
 </body>
 </html>
