@@ -3,65 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>捕魚歌 - 速度調節與重設版</title>
+    <title>捕魚歌 - 專業教學互動版</title>
     <style>
+        /* 全域樣式與背景圖設定 */
         * { box-sizing: border-box; }
         body { 
             font-family: "Microsoft JhengHei", sans-serif; 
-            background-color: #1a1a1a; color: white; 
-            display: flex; flex-direction: column; align-items: center; 
-            height: 100vh; margin: 0; padding: 5px; overflow: hidden;
+            margin: 0; padding: 5px;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 修正：使用 GitHub 原始圖片連結 + 深色遮罩 */
+            background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), 
+                              url('https://raw.githubusercontent.com/goodskyfly-cell/fishsong/main/fishsong.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
         }
 
+        /* 控制面板：半透明毛玻璃效果 */
         .control-panel { 
-            background: #333; padding: 8px 15px; border-radius: 12px; 
-            width: 98%; max-width: 900px; text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); margin-bottom: 5px; flex-shrink: 0;
+            background: rgba(45, 45, 45, 0.85); 
+            backdrop-filter: blur(8px);
+            padding: 8px 15px; 
+            border-radius: 12px; 
+            width: 98%; 
+            max-width: 900px; 
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6); 
+            margin-bottom: 5px; 
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        audio { width: 100%; height: 30px; margin: 2px 0; }
+        
+        audio { width: 100%; height: 30px; margin: 4px 0; }
         
         #countdown { 
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            font-size: 10rem; font-weight: 900; z-index: 100; display: none; 
-            pointer-events: none; text-shadow: 0 0 30px rgba(0,0,0,0.9); 
+            font-size: 12rem; font-weight: 900; z-index: 100; display: none; 
+            pointer-events: none; text-shadow: 0 0 40px rgba(0,0,0,1); 
         }
 
         .btn-row { margin-bottom: 5px; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
         
         .page-btn, .action-btn { 
-            background: #444; border: 1px solid #666; color: #eee; 
-            padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; 
+            background: rgba(255, 255, 255, 0.1); border: 1px solid #666; color: #eee; 
+            padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 0.95rem; 
+            transition: 0.2s;
         }
-        .page-btn.active { background: #e67e22; border-color: #ff9f43; font-weight: bold; }
-        .action-btn.reset { background: #c0392b; border-color: #e74c3c; }
+        .page-btn.active { background: #e67e22; border-color: #ff9f43; color: white; font-weight: bold; }
+        .action-btn.reset { background: #c0392b; border-color: #ff4d4d; color: white; }
         
-        select { background: #222; color: #f1c40f; border: 1px solid #f1c40f; border-radius: 4px; padding: 3px; font-size: 0.9rem; }
+        select { background: #222; color: #f1c40f; border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; font-size: 0.95rem; }
 
+        /* 歌詞區域排版 */
         .page-content { 
             display: none; width: 100%; max-width: 1100px; 
             flex-grow: 1; flex-direction: column; justify-content: space-around;
+            padding: 5px 0;
         }
         .page-content.active { display: flex; }
 
-        .lyrics-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; flex-grow: 1; margin-bottom: 4px; }
+        .lyrics-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; flex-grow: 1; margin-bottom: 6px; }
 
         .beat-box { 
-            background: #2d3436; border-radius: 8px; 
+            background: rgba(255, 255, 255, 0.05); 
+            border-radius: 10px; 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            opacity: 0.15; border: 1px solid #3d4446; transition: all 0.1s ease;
+            opacity: 0.3; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            transition: all 0.1s ease;
         }
         
         .beat-box.highlight { 
-            background: #f1c40f; color: black !important; transform: scale(1.03); 
-            box-shadow: 0 0 15px #f1c40f; opacity: 1; border: 2px solid #fff; z-index: 10;
+            background: rgba(241, 196, 15, 0.9); 
+            color: black !important; 
+            transform: scale(1.03); 
+            box-shadow: 0 0 20px #f1c40f; 
+            opacity: 1; 
+            border: 2px solid #fff; 
+            z-index: 10;
         }
         
-        .action { display: block; font-size: 4.5vh; font-weight: bold; color: #ff7675; line-height: 1; }
-        .beat-box.highlight .action { color: #d63031; }
-        .lyrics { display: block; font-size: 2.8vh; margin-top: 2px; font-weight: bold; }
+        .action { display: block; font-size: 4.8vh; font-weight: bold; color: #ff7675; line-height: 1; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+        .beat-box.highlight .action { color: #d63031; text-shadow: none; }
+        .lyrics { display: block; font-size: 2.8vh; margin-top: 4px; font-weight: bold; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+        .beat-box.highlight .lyrics { text-shadow: none; }
         
-        .config-row { display: flex; justify-content: center; gap: 10px; font-size: 0.8rem; color: #fbc531; }
-        input { background: #222; color: #fff; border: 1px solid #fbc531; width: 45px; text-align: center; border-radius: 3px; }
+        .config-row { display: flex; justify-content: center; gap: 12px; font-size: 0.8rem; color: #fbc531; opacity: 0.8; }
+        input { background: #111; color: #fff; border: 1px solid #666; width: 45px; text-align: center; border-radius: 3px; }
+
+        @media (max-width: 700px) {
+            .lyrics-row { grid-template-columns: repeat(4, 1fr); }
+            .action { font-size: 4vh; }
+            .lyrics { font-size: 2.2vh; }
+        }
     </style>
 </head>
 <body>
@@ -73,12 +112,12 @@
             <source src="https://raw.githubusercontent.com/goodskyfly-cell/fishsong/main/fishing_song.mp3" type="audio/mpeg">
         </audio>
         
-        <div id="status" style="font-size: 0.9rem; color: #f1c40f; height: 18px; margin-bottom: 3px;">準備就緒</div>
+        <div id="status" style="font-size: 0.9rem; color: #f1c40f; height: 18px; margin-bottom: 5px; font-weight: bold;">準備就緒</div>
         
         <div class="btn-row">
             <button class="page-btn active" id="btn1" onclick="showPage(1)">第一段</button>
             <button class="page-btn" id="btn2" onclick="showPage(2)">第二段</button>
-            <span style="font-size: 0.9rem;">速度: </span>
+            <span style="font-size: 0.95rem; margin-left: 10px;">速度: </span>
             <select id="speedSelect" onchange="changeSpeed()">
                 <option value="0.5">50%</option>
                 <option value="0.75">75%</option>
@@ -86,7 +125,7 @@
                 <option value="1.25">125%</option>
                 <option value="1.5">150%</option>
             </select>
-            <button class="action-btn reset" onclick="resetAll()">重新開始</button>
+            <button class="action-btn reset" onclick="resetAll()" style="margin-left: 10px;">重新開始</button>
         </div>
 
         <div class="config-row">
@@ -111,7 +150,8 @@
     </div>
 
     <script>
-        const lyrics = [
+        // 歌詞資料 (略...) 同前版本
+        const lyricsData = [
             { a: "拍", l: "白" }, { a: "拍", l: "浪" }, { a: "打打", l: "滔" }, { a: "打", l: "滔" },
             { a: "拍", l: "我" }, { a: "拿", l: "不" }, { a: "放", l: "怕" }, { a: "～", l: "，" },
             { a: "拍", l: "掌" }, { a: "拿", l: "穩" }, { a: "碰", l: "舵" }, { a: "敲", l: "兒" },
@@ -121,12 +161,13 @@
             { a: "拍", l: "捕" }, { a: "拿", l: "條" }, { a: "碰", l: "大" }, { a: "敲", l: "魚" },
             { a: "換", l: "笑" }, { a: "手", l: "哈" }, { a: "放", l: "哈" }, { a: "～", l: "。" }
         ];
-        const songData = [...lyrics, ...lyrics];
+        const songData = [...lyricsData, ...lyricsData];
 
         const audio = document.getElementById('bgMusic');
         const bpmInput = document.getElementById('bpmInput');
         const d1In = document.getElementById('delay1Input');
         const d2In = document.getElementById('delay2Input');
+        const statusText = document.getElementById('status');
         const countdownEl = document.getElementById('countdown');
         const rows = [
             document.getElementById('row1-1'), document.getElementById('row1-2'), document.getElementById('row1-3'), document.getElementById('row1-4'),
@@ -151,21 +192,13 @@
 
         function changeSpeed() {
             audio.playbackRate = document.getElementById('speedSelect').value;
-            if (timer) {
-                stopBeatTimer();
-                const interval = (60000 / parseInt(bpmInput.value)) / audio.playbackRate;
-                timer = setInterval(playStep, interval);
-            }
+            if (timer) { stopBeatTimer(); startSyncTimer(); }
         }
 
         function resetAll() {
-            stopBeatTimer();
-            audio.pause();
-            audio.currentTime = 0;
-            currentIndex = 0;
+            stopBeatTimer(); audio.pause(); audio.currentTime = 0; currentIndex = 0;
             document.querySelectorAll('.beat-box').forEach(b => b.classList.remove('highlight'));
-            showPage(1);
-            document.getElementById('status').innerText = "已重設";
+            showPage(1); statusText.innerText = "已重設，準備就緒";
         }
 
         function playStep() {
@@ -174,8 +207,14 @@
                 const target = document.getElementById('box-' + currentIndex);
                 if (target) target.classList.add('highlight');
                 currentIndex++;
-                if (currentIndex === 32) stopBeatTimer();
-            } else { stopBeatTimer(); }
+                if (currentIndex === 32) { stopBeatTimer(); statusText.innerText = "第一段完，間奏中..."; }
+            } else { stopBeatTimer(); statusText.innerText = "演唱結束！"; }
+        }
+
+        function startSyncTimer() {
+            const speed = audio.playbackRate;
+            const interval = (60000 / parseInt(bpmInput.value)) / speed;
+            timer = setInterval(playStep, interval);
         }
 
         function stopBeatTimer() { clearInterval(timer); timer = null; }
@@ -184,26 +223,21 @@
             const time = audio.currentTime;
             const d1 = parseFloat(d1In.value), d2 = parseFloat(d2In.value);
             const speed = audio.playbackRate;
-            
             const target = (currentIndex < 32) ? d1 : d2;
-            const timeLeft = (target - time) / speed; // 考慮倍速後的剩餘時間
+            const timeLeft = (target - time) / speed;
 
             if (timeLeft <= 3 && timeLeft > 0 && (currentIndex === 0 || currentIndex === 32)) {
                 countdownEl.style.display = 'block';
                 const count = Math.ceil(timeLeft);
                 countdownEl.innerText = count;
-                countdownEl.style.color = count === 3 ? "#3498db" : (count === 2 ? "#f39c12" : "#e74c3c");
+                countdownEl.style.color = count === 3 ? "#3498db" : (count === 2 ? "#fbc531" : "#ff4d4d");
             } else { countdownEl.style.display = 'none'; }
 
             if (time >= d1 && time < d1 + 0.3 && currentIndex === 0 && !timer) {
-                showPage(1);
-                const interval = (60000 / parseInt(bpmInput.value)) / speed;
-                timer = setInterval(playStep, interval);
+                showPage(1); startSyncTimer(); statusText.innerText = "第一段：播放中";
             }
             if (time >= d2 && time < d2 + 0.3 && currentIndex === 32 && !timer) {
-                showPage(2);
-                const interval = (60000 / parseInt(bpmInput.value)) / speed;
-                timer = setInterval(playStep, interval);
+                showPage(2); startSyncTimer(); statusText.innerText = "第二段：播放中";
             }
         };
 
