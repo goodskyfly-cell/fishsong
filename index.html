@@ -3,42 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>捕魚歌 - 音樂同步律動器</title>
+    <title>捕魚歌 - 前奏延遲同步版</title>
     <style>
-        /* 保持之前的樣式 */
         body { font-family: "Microsoft JhengHei", sans-serif; background-color: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .control-panel { background: #333; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; width: 100%; max-width: 800px; }
-        
-        /* 音樂播放器樣式 */
         audio { margin: 15px 0; width: 100%; max-width: 400px; }
-
         .lyrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 800px; }
-        .beat-box { background: #2d3436; padding: 15px 5px; text-align: center; border-radius: 8px; transition: all 0.1s ease; display: flex; flex-direction: column; align-items: center; }
-        .beat-box.highlight { background: #f1c40f; color: black; transform: scale(1.08); box-shadow: 0 0 20px #f1c40f; }
-        .action { display: block; font-size: 2.2rem; font-weight: bold; color: #ff7675; }
+        .beat-box { background: #2d3436; padding: 15px 5px; text-align: center; border-radius: 8px; transition: all 0.1s ease; display: flex; flex-direction: column; align-items: center; opacity: 0.5; }
+        .beat-box.highlight { background: #f1c40f; color: black; transform: scale(1.08); box-shadow: 0 0 20px #f1c40f; opacity: 1; }
+        .action { display: block; font-size: 2.2rem; font-weight: bold; color: #ff7675; line-height: 1.2; }
         .beat-box.highlight .action { color: #d63031; }
         .lyrics { display: block; font-size: 1.6rem; margin-top: 5px; }
+        #status { font-weight: bold; height: 24px; }
     </style>
 </head>
 <body>
 
-    <h1>🚢 捕魚歌：音樂同步模式</h1>
+    <h1>🚢 捕魚歌：音樂同步 (含前奏延遲)</h1>
 
     <div class="control-panel">
         <audio id="bgMusic" controls>
-            <source src="https://github.com/goodskyfly-cell/fishsong/blob/main/fishing_song.mp3" type="audio/mpeg">
-            您的瀏覽器不支援音檔播放。
+            <source src="fishing_song.mp3" type="audio/mpeg">
         </audio>
 
-        <div id="status" style="margin-top: 10px; color: #f1c40f;">請點擊播放器「▶」開始同步</div>
+        <div id="status" style="margin-top: 10px; color: #f1c40f;">等待播放...</div>
         
-        <div style="margin-top: 10px; font-size: 0.9rem; color: #aaa;">
-            提示：若音樂與動作沒對準，可調整下方 BPM
-        </div>
-        
-        <div class="speed-selector" style="margin-top:10px;">
-            基準速度調整 (BPM)：
-            <input type="number" id="bpmInput" value="120" style="width: 50px; padding: 5px;">
+        <div style="margin-top: 15px; display: flex; justify-content: center; gap: 20px; font-size: 0.9rem;">
+            <div>基準 BPM: <input type="number" id="bpmInput" value="120" style="width: 50px;"></div>
+            <div>前奏延遲 (秒): <input type="number" id="delayInput" value="7" step="0.1" style="width: 50px;"></div>
         </div>
     </div>
 
@@ -59,11 +51,13 @@
         const grid = document.getElementById('grid');
         const audio = document.getElementById('bgMusic');
         const bpmInput = document.getElementById('bpmInput');
+        const delayInput = document.getElementById('delayInput');
+        const statusText = document.getElementById('status');
         
         let timer = null;
+        let delayTimer = null;
         let currentIndex = 0;
 
-        // 初始化格子
         songData.forEach(item => {
             const div = document.createElement('div');
             div.className = 'beat-box';
@@ -79,32 +73,45 @@
                 boxes[currentIndex].classList.add('highlight');
                 currentIndex++;
             } else {
-                // 音樂循環或停止
-                currentIndex = 0; 
+                // 若音樂還在跑且已唱完歌詞，可在此設定停止或循環
+                clearInterval(timer);
+                statusText.innerText = "演唱結束";
             }
         }
 
-        // 監聽：當音樂開始播放時啟動動畫
         audio.onplay = function() {
-            const interval = 60000 / parseInt(bpmInput.value);
-            currentIndex = 0;
-            if(timer) clearInterval(timer);
-            playNext(); 
-            timer = setInterval(playNext, interval);
+            clearAllTimers();
+            const delayTime = parseFloat(delayInput.value) * 1000;
+            statusText.innerText = "前奏中，準備開始...";
+            
+            // 設定延遲啟動
+            delayTimer = setTimeout(() => {
+                statusText.innerText = "GO! 🎵";
+                const interval = 60000 / parseInt(bpmInput.value);
+                currentIndex = 0;
+                playNext(); 
+                timer = setInterval(playNext, interval);
+            }, delayTime);
         };
 
-        // 監聽：當音樂暫停時停止動畫
         audio.onpause = function() {
-            clearInterval(timer);
-            timer = null;
+            clearAllTimers();
+            statusText.innerText = "暫停播放";
         };
 
-        // 監聽：當音樂停止(放完)時重設
-        audio.onended = function() {
-            clearInterval(timer);
-            currentIndex = 0;
+        audio.onseeked = function() {
+            // 如果使用者手動拉進度條，停止動畫避免亂拍
+            clearAllTimers();
             boxes.forEach(b => b.classList.remove('highlight'));
+            statusText.innerText = "請重新播放以同步";
         };
+
+        function clearAllTimers() {
+            if(timer) clearInterval(timer);
+            if(delayTimer) clearTimeout(delayTimer);
+            timer = null;
+            delayTimer = null;
+        }
     </script>
 </body>
 </html>
